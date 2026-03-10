@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Modern corporate IT infrastructure",
+      "imageUrl": "https://picsum.photos/seed/insync1/1200/600",
+      "imageHint": "it infrastructure"
+    },
+    {
+      "id": "service-cloud",
+      "description": "Cloud computing illustration",
+      "imageUrl": "https://picsum.photos/seed/insync2/600/400",
+      "imageHint": "cloud computing"
+    },
+    {
+      "id": "service-security",
+      "description": "Cybersecurity and data protection",
+      "imageUrl": "https://picsum.photos/seed/insync3/600/400",
+      "imageHint": "cyber security"
+    },
+    {
+      "id": "service-support",
+      "description": "Technical support team working",
+      "imageUrl": "https://picsum.photos/seed/insync4/600/400",
+      "imageHint": "tech support"
+    },
+    {
+      "id": "app-logo",
+      "description": "InSync Connect official logo",
+      "imageUrl": "https://exoauth-picturebucket.s3.us-east-1.amazonaws.com/Gemini_Generated_Image_b7zp3gb7zp3gb7zp.png",
+      "imageHint": "company logo"
+    }
+  ]
+}

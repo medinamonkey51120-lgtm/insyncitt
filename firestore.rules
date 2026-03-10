@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * INSYNC CONNECT SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict user-ownership model combined with role-based access 
+     * for administrative functions. It is optimized for Google Auth integration by tying 
+     * all private user data directly to the Firebase Authentication UID.
+     *
+     * DATA STRUCTURE:
+     * - /users/{userId}: Private user profiles, owned by the authenticated user.
+     * - /users/{userId}/supportTickets/{ticketId}: Personal support tickets.
+     * - /services/{serviceId}: Publicly viewable IT services catalog.
+     * - /adminRoles/{adminId}: Internal registry for database-level administrative roles.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Authorization Independence: We use denormalized fields (like userId) and path parameters 
+     *    to make security decisions without expensive get() calls.
+     * 2. Prototyping Flexibility: We enforce WHO can write (authorization) but do not strictly 
+     *    enforce the data schema (types/fields) to allow for rapid frontend iteration.
+     * 3. Structural Segregation: Public data (Services) is kept in top-level collections 
+     *    distinct from private user trees.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the provided ID matches the authenticated user's UID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Combines ownership check with document existence for destructive operations. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** Checks if the authenticated user has an entry in the adminRoles collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/adminRoles/$(request.auth.uid));
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for User Profiles. Users can manage their own profile data.
+     * @path /users/{userId}
+     * @allow Authenticated user (create) where document ID matches their UID.
+     * @deny Any user attempting to read or write a profile that does not belong to them.
+     * @principle Ownership: Ties data access to the path-based UID.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for Support Tickets. Nested under the owner's user document.
+       * @path /users/{userId}/supportTickets/{ticketId}
+       * @allow Owner (list) all tickets in their own subcollection.
+       * @deny Non-owners attempting to view or submit tickets for another user.
+       * @principle Relational Integrity: Ensures the 'userId' field matches the path.
+       */
+      match /supportTickets/{ticketId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Rules for Messages within a ticket.
+         * @path /users/{userId}/supportTickets/{ticketId}/messages/{messageId}
+         * @allow Owner (create) a message if they own the parent ticket path.
+         * @deny Unauthorized users accessing private support conversations.
+         * @principle Denormalization: Path-based authorization avoids extra lookups.
+         */
+        match /messages/{messageId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.ticketId == ticketId;
+          allow update: if isExistingOwner(userId) && request.resource.data.ticketId == resource.data.ticketId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+
+    /**
+     * @description Public IT services catalog.
+     * @path /services/{serviceId}
+     * @allow Any visitor (get/list) to view services on the homepage.
+     * @deny Non-admin users attempting to modify the service catalog.
+     * @principle Public Read/Admin Write: Protects global configuration data.
+     */
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Registry for administrative roles.
+     * @path /adminRoles/{adminId}
+     * @allow Signed-in users (get) to verify their own role status.
+     * @deny Public listing or self-assignment of admin privileges.
+     * @principle Role-Based Access: Centralized authority check via document existence.
+     */
+    match /adminRoles/{adminId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if false; // Admin roles should be managed via Firebase Console/Admin SDK for security.
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Family staying connected through technology",
+      "imageUrl": "https://picsum.photos/seed/insync-home/1200/600",
+      "imageHint": "happy family technology"
+    },
+    {
+      "id": "service-cloud",
+      "description": "Sharing digital memories and photos",
+      "imageUrl": "https://picsum.photos/seed/insync-memories/600/400",
+      "imageHint": "family photos sharing"
+    },
+    {
+      "id": "service-security",
+      "description": "Safe and secure internet browsing",
+      "imageUrl": "https://picsum.photos/seed/insync-safe/600/400",
+      "imageHint": "safe internet computer"
+    },
+    {
+      "id": "service-support",
+      "description": "Patient and friendly technical support",
+      "imageUrl": "https://picsum.photos/seed/insync-help/600/400",
+      "imageHint": "patient teacher tech"
+    },
+    {
+      "id": "app-logo",
+      "description": "InSync Connect official logo",
+      "imageUrl": "https://exoauth-picturebucket.s3.us-east-1.amazonaws.com/Gemini_Generated_Image_b7zp3gb7zp3gb7zp.png",
+      "imageHint": "modern simple logo"
+    }
+  ]
+}
